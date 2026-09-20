@@ -11,8 +11,8 @@ def get_notes():
     connection.row_factory = sqlite3.Row
 
     notes = connection.execute(
-        "SELECT id, title, content, source, tags FROM notes"
-    ).fetchall()
+      "SELECT id, title, content, source, tags, url FROM notes"
+     ).fetchall()
 
     connection.close()
 

@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS notes (
     title TEXT NOT NULL,
     content TEXT,
     source TEXT,
-    tags TEXT
+    tags TEXT,
+    url TEXT
 )
 """)
 
