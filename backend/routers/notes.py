@@ -1,7 +1,7 @@
-
 import sqlite3
 
 from fastapi import APIRouter
+from fastapi.responses import FileResponse
 
 router = APIRouter()
 
@@ -56,3 +56,12 @@ def search_notes(q: str, source: str = "all"):
     connection.close()
 
     return [dict(note) for note in notes]
+
+
+@router.get("/joplin/resources/{resource_id}")
+def get_joplin_resource(resource_id: str):
+    resource_path = (
+        rf"C:\Users\Danh\.config\joplin-desktop\resources\{resource_id}.png"
+    )
+
+    return FileResponse(resource_path)
