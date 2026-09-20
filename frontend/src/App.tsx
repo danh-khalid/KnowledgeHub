@@ -81,7 +81,21 @@ function App() {
             </div>
 
             <div className="content">
-              <ReactMarkdown>{note.content}</ReactMarkdown>
+              <ReactMarkdown
+                components={{
+                  a: ({ href, children }) => (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {note.content}
+              </ReactMarkdown>
             </div>
 
             {note.tags && <p className="tags">{note.tags}</p>}
