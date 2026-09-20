@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import './App.css'
 
 type Note = {
@@ -79,7 +80,9 @@ function App() {
               </span>
             </div>
 
-            <p className="content">{note.content}</p>
+            <div className="content">
+              <ReactMarkdown>{note.content}</ReactMarkdown>
+            </div>
 
             {note.tags && <p className="tags">{note.tags}</p>}
 

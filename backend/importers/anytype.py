@@ -50,15 +50,16 @@ def import_notes():
     connection = sqlite3.connect(KNOWLEDGE_HUB_DB)
 
     imported = 0
-    skipped = 0
+    updated = 0
 
     for page in pages:
         object_id = page["id"]
         title = page.get("name") or "Untitled"
 
         details = get_page_content(object_id)
+        markdown = details["object"].get("markdown", "")
 
-        markdown = details.get("markdown", "")
+        url = f"anytype://object?objectId={object_id}&spaceId={SPACE_ID}"
 
         existing = connection.execute(
             """
@@ -70,7 +71,16 @@ def import_notes():
         ).fetchone()
 
         if existing:
-            skipped += 1
+            connection.execute(
+                """
+                UPDATE notes
+                SET content = ?, url = ?
+                WHERE id = ?
+                """,
+                (markdown, url, existing[0]),
+            )
+
+            updated += 1
             continue
 
         connection.execute(
@@ -83,7 +93,7 @@ def import_notes():
                 markdown,
                 "anytype",
                 "",
-                f"anytype://object?objectId={object_id}&spaceId={SPACE_ID}",
+                url,
             ),
         )
 
@@ -93,7 +103,7 @@ def import_notes():
     connection.close()
 
     print(f"imported: {imported}")
-    print(f"skipped: {skipped}")
+    print(f"updated: {updated}")
 
 
 if __name__ == "__main__":
