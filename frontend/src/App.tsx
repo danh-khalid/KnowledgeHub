@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import 'katex/dist/katex.min.css'
 import './App.css'
 
 type Note = {
@@ -13,28 +17,35 @@ type Note = {
 
 function App() {
   const [query, setQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [source, setSource] = useState('all')
   const [notes, setNotes] = useState<Note[]>([])
 
   useEffect(() => {
-    if (!query.trim()) {
+    if (!searchQuery.trim()) {
       setNotes([])
       return
     }
 
     fetch(
-      `http://127.0.0.1:8000/notes/search?q=${encodeURIComponent(query)}&source=${source}`
+      `http://127.0.0.1:8000/notes/search?q=${encodeURIComponent(searchQuery)}&source=${source}`
     )
       .then((response) => response.json())
       .then((data) => {
         setNotes(data)
       })
-  }, [query, source])
+  }, [searchQuery, source])
 
-  const hasSearch = query.trim().length > 0
+  const hasSearch = searchQuery.trim().length > 0
+
+  const handleSearch = (event: FormEvent) => {
+    event.preventDefault()
+    setSearchQuery(query)
+  }
 
   const clearSearch = () => {
     setQuery('')
+    setSearchQuery('')
     setSource('all')
   }
 
@@ -46,27 +57,37 @@ function App() {
       </header>
 
       <section className="search-section">
-        <input
-          type="text"
-          placeholder="Search notes..."
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+        <form onSubmit={handleSearch}>
+          <input
+            type="text"
+            placeholder="Search notes..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
 
-        <select
-          value={source}
-          onChange={(event) => setSource(event.target.value)}
-        >
-          <option value="all">All</option>
-          <option value="anytype">Anytype</option>
-          <option value="joplin">Joplin</option>
-        </select>
+          <select
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+          >
+            <option value="all">All</option>
+            <option value="anytype">Anytype</option>
+            <option value="joplin">Joplin</option>
+          </select>
 
-        {hasSearch && (
-          <button className="clear-button" onClick={clearSearch}>
-            Clear
+          <button type="submit">
+            Search
           </button>
-        )}
+
+          {hasSearch && (
+            <button
+              type="button"
+              className="clear-button"
+              onClick={clearSearch}
+            >
+              Clear
+            </button>
+          )}
+        </form>
       </section>
 
       <section className="results">
@@ -82,6 +103,8 @@ function App() {
 
             <div className="content">
               <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[rehypeKatex]}
                 components={{
                   a: ({ href, children }) => (
                     <a
@@ -91,6 +114,15 @@ function App() {
                     >
                       {children}
                     </a>
+                  ),
+
+                  input: ({ type, checked, ...props }) => (
+                    <input
+                      {...props}
+                      type={type}
+                      checked={checked}
+                      readOnly
+                    />
                   ),
                 }}
               >
