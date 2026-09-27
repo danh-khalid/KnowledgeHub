@@ -15,11 +15,28 @@ type Note = {
   url: string | null
 }
 
+const HISTORY_KEY = 'knowledgehub-search-history'
+const MAX_HISTORY = 10
+
 function App() {
   const [query, setQuery] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [source, setSource] = useState('all')
   const [notes, setNotes] = useState<Note[]>([])
+  const [searchHistory, setSearchHistory] = useState<string[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+
+  useEffect(() => {
+    const savedHistory = localStorage.getItem(HISTORY_KEY)
+
+    if (savedHistory) {
+      try {
+        setSearchHistory(JSON.parse(savedHistory))
+      } catch {
+        setSearchHistory([])
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -38,15 +55,49 @@ function App() {
 
   const hasSearch = searchQuery.trim().length > 0
 
+  const saveSearchHistory = (value: string) => {
+    const trimmedValue = value.trim()
+
+    if (!trimmedValue) {
+      return
+    }
+
+    const updatedHistory = [
+      trimmedValue,
+      ...searchHistory.filter(
+        (item) => item.toLowerCase() !== trimmedValue.toLowerCase()
+      ),
+    ].slice(0, MAX_HISTORY)
+
+    setSearchHistory(updatedHistory)
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updatedHistory))
+  }
+
   const handleSearch = (event: FormEvent) => {
     event.preventDefault()
-    setSearchQuery(query)
+
+    const trimmedQuery = query.trim()
+
+    if (!trimmedQuery) {
+      return
+    }
+
+    saveSearchHistory(trimmedQuery)
+    setSearchQuery(trimmedQuery)
+    setShowHistory(false)
+  }
+
+  const handleHistoryClick = (historyItem: string) => {
+    setQuery(historyItem)
+    setSearchQuery(historyItem)
+    setShowHistory(false)
   }
 
   const clearSearch = () => {
     setQuery('')
     setSearchQuery('')
     setSource('all')
+    setShowHistory(false)
   }
 
   return (
@@ -58,12 +109,31 @@ function App() {
 
       <section className="search-section">
         <form onSubmit={handleSearch}>
-          <input
-            type="text"
-            placeholder="Search notes..."
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
+          <div className="search-input-wrapper">
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onFocus={() => setShowHistory(true)}
+            />
+
+            {showHistory && searchHistory.length > 0 && (
+              <div className="search-history">
+                {searchHistory.map((item) => (
+                  <button
+                    type="button"
+                    key={item}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => handleHistoryClick(item)}
+                  >
+                    <span>⌕</span>
+                    {item}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <select
             value={source}
